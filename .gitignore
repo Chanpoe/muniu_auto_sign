@@ -1,0 +1,8 @@
+
+*.exe
+chromedriver*
+config.py
+*.env
+*.json
+*.conf
+*.txt

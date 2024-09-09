@@ -6,3 +6,4 @@ config.py
 *.json
 *.conf
 *.txt
+__pycache__/*

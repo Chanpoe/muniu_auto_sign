@@ -1,25 +1,38 @@
+import os
+import time
+
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
 
-from config import ACCOUNT, PASSWORD, PROXY_STR
+from config import ACCOUNT, PASSWORD, PROXY_STR, CHROME_DRIVER_PATH
 
 chrome_options = Options()
 # 设置代理
 chrome_options.add_argument(f'--proxy-server={PROXY_STR}')
 # 最大化窗口
 chrome_options.add_argument('--start-maximized')
+# 禁用 GPU 加速
+chrome_options.add_argument("--disable-gpu")
+# 绕过操作系统安全模型
+chrome_options.add_argument("--no-sandbox")
+# 解决资源限制问题
+chrome_options.add_argument("--disable-dev-shm-usage")
 # 设置无头模式
-chrome_options.add_argument('--headless')
-chrome_options.add_argument("--disable-gpu")  # 禁用 GPU 加速
-chrome_options.add_argument("--no-sandbox")  # 绕过操作系统安全模型
-chrome_options.add_argument("--disable-dev-shm-usage")  # 解决资源限制问题
-chrome_options.add_argument("--user-data-dir=/tmp/chrome-user-data")  # 自定义用户数据目录
+# chrome_options.add_argument('--headless')
 
-# driver = webdriver.Chrome(executable_path='/root/pythonfiles/chromedriver', options=chrome_options)
-driver = webdriver.Chrome(options=chrome_options)
+
+# Linux 设置chomedriver路径
+if os.name != 'nt':
+    # 创建 Service 对象
+    service = Service(CHROME_DRIVER_PATH)
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+# Windows 设置
+else:
+    driver = webdriver.Chrome(options=chrome_options)
 
 
 def muniu_sign():
@@ -40,15 +53,22 @@ def muniu_sign():
     login_btn.click()
 
     try:
-        if EC.visibility_of_element_located(
-                (By.CLASS_NAME, "btn btn-transparent-white font-weight-bold py-3 px-6 mr-2 disabled")):
+        wait = WebDriverWait(driver, 2)  # 等待2秒
+        # element = driver.find_elements(By.CSS_SELECTOR, '.btn.btn-transparent-white.font-weight-bold.py-3.px-6.mr-2.disabled')
+        element = wait.until(EC.presence_of_element_located(
+            (By.CSS_SELECTOR, '.btn.btn-transparent-white.font-weight-bold.py-3.px-6.mr-2.disabled')))
+        print(element)
+        if element:
             print("今日已签到")
+        else:
+            raise Exception
     except:
         # 签到
         sign_in_btn = WebDriverWait(driver, 100).until(
             EC.visibility_of_element_located((By.ID, "checkin"))
         )
         sign_in_btn.click()
+        print("签到成功")
 
 
 if __name__ == '__main__':

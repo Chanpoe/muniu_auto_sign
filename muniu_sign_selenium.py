@@ -22,7 +22,7 @@ chrome_options.add_argument("--no-sandbox")
 # 解决资源限制问题
 chrome_options.add_argument("--disable-dev-shm-usage")
 # 设置无头模式
-# chrome_options.add_argument('--headless')
+chrome_options.add_argument('--headless')
 
 
 # Linux 设置chomedriver路径
@@ -36,8 +36,9 @@ else:
 
 
 def muniu_sign():
+    print('正在打开muniu网站')
     driver.get('https://muniucloud.quest/')
-
+    print('正在登录')
     # 登录
     email_input = WebDriverWait(driver, 100).until(
         EC.visibility_of_element_located((By.ID, "email"))
@@ -51,8 +52,10 @@ def muniu_sign():
     email_input.send_keys(ACCOUNT)
     passwd_input.send_keys(PASSWORD)
     login_btn.click()
+    print('登录成功')
 
     try:
+        print('正在检查签到状态')
         wait = WebDriverWait(driver, 2)  # 等待2秒
         # element = driver.find_elements(By.CSS_SELECTOR, '.btn.btn-transparent-white.font-weight-bold.py-3.px-6.mr-2.disabled')
         element = wait.until(EC.presence_of_element_located(
@@ -63,11 +66,14 @@ def muniu_sign():
         else:
             raise Exception
     except:
+        print("今日未签到")
         # 签到
         sign_in_btn = WebDriverWait(driver, 100).until(
             EC.visibility_of_element_located((By.ID, "checkin"))
         )
+        print("正在签到")
         sign_in_btn.click()
+        time.sleep(2)
         print("签到成功")
 
 

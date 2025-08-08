@@ -1,0 +1,9 @@
+[project]
+name = "muniu-auto-sign"
+version = "0.1.0"
+description = "Automatic sign-in for muniu to obtain traffic, implemented using Selenium."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "selenium>=4.34.2",
+]

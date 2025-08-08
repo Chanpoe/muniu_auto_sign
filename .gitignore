@@ -7,3 +7,5 @@ config.py
 *.conf
 *.txt
 __pycache__/*
+
+uv.lock

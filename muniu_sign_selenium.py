@@ -29,8 +29,9 @@ chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--no-sandbox")
 # 解决资源限制问题
 chrome_options.add_argument("--disable-dev-shm-usage")
-# 设置无头模式
-# chrome_options.add_argument('--headless')
+if os.name != 'nt':
+    # 设置无头模式
+    chrome_options.add_argument('--headless')
 # 忽略证书错误（给代理/握手偶发失败兜底）
 chrome_options.add_argument('--ignore-certificate-errors')
 chrome_options.set_capability('acceptInsecureCerts', True)

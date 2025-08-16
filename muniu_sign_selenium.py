@@ -30,7 +30,7 @@ chrome_options.add_argument("--no-sandbox")
 # 解决资源限制问题
 chrome_options.add_argument("--disable-dev-shm-usage")
 # 设置无头模式
-chrome_options.add_argument('--headless')
+# chrome_options.add_argument('--headless')
 # 忽略证书错误（给代理/握手偶发失败兜底）
 chrome_options.add_argument('--ignore-certificate-errors')
 chrome_options.set_capability('acceptInsecureCerts', True)
@@ -73,7 +73,7 @@ def muniu_sign():
                 )
                 # 滚动到可见
                 driver.execute_script('arguments[0].scrollIntoView({block: "center"});', element)
-                time.sleep(0.1)
+                time.sleep(0.15)
                 try:
                     element.click()
                     return True
@@ -84,8 +84,19 @@ def muniu_sign():
                         return True
                     except (ElementClickInterceptedException, WebDriverException):
                         # JS 回退点击
-                        driver.execute_script('arguments[0].click();', element)
-                        return True
+                        try:
+                            driver.execute_script('arguments[0].click();', element)
+                            return True
+                        except Exception:
+                            # 派发 MouseEvent 触发器
+                            driver.execute_script(
+                                "var e1=new MouseEvent('mousedown',{bubbles:true,cancelable:true,view:window});"
+                                "var e2=new MouseEvent('mouseup',{bubbles:true,cancelable:true,view:window});"
+                                "var e3=new MouseEvent('click',{bubbles:true,cancelable:true,view:window});"
+                                "arguments[0].dispatchEvent(e1);arguments[0].dispatchEvent(e2);arguments[0].dispatchEvent(e3);",
+                                element
+                            )
+                            return True
             except (StaleElementReferenceException, TimeoutException, WebDriverException) as e:
                 last_err = e
                 time.sleep(0.3)
@@ -191,6 +202,12 @@ def muniu_sign():
             raise last_err
         return None
 
+    # 确保不在 iframe 中
+    try:
+        driver.switch_to.default_content()
+    except Exception:
+        pass
+
     # 登录表单交互
     email_input = WebDriverWait(driver, 60).until(
         EC.visibility_of_element_located((By.ID, "email"))
@@ -211,12 +228,29 @@ def muniu_sign():
     except Exception:
         pass
     email_input.send_keys(ACCOUNT)
+    # 触发前端框架输入监听
+    try:
+        driver.execute_script(
+            "arguments[0].dispatchEvent(new Event('input', {bubbles:true}));"
+            "arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+            email_input
+        )
+    except Exception:
+        pass
 
     try:
         passwd_input.clear()
     except Exception:
         pass
     passwd_input.send_keys(PASSWORD)
+    try:
+        driver.execute_script(
+            "arguments[0].dispatchEvent(new Event('input', {bubbles:true}));"
+            "arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+            passwd_input
+        )
+    except Exception:
+        pass
 
     # 点击登录前尝试关闭站内弹窗
     try_dismiss_site_dialogs(max_rounds=2)
@@ -246,7 +280,7 @@ def muniu_sign():
     # 等待页面完成并出现签到入口或页面发生变化
     # 等待页面加载与跳出登录页（或出现签到入口）
     try:
-        wait_document_ready(5)
+        wait_document_ready(20)
     except TimeoutException:
         pass
     try:
@@ -255,7 +289,7 @@ def muniu_sign():
             lambda d: '/auth/login' not in (d.current_url or ''),
             lambda d: 'user' in (d.current_url or ''),
             lambda d: 'dashboard' in (d.current_url or ''),
-        ], timeout=10)
+        ], timeout=30)
     except TimeoutException:
         time.sleep(1.5)
 
